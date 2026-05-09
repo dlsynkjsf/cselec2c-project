@@ -1,4 +1,4 @@
-# Employee Attrition Prediction with Cost-Sensitive Learning
+# Prediction of Employee Attrition using Random Forest and Extreme Gradient Boosting on the Employee Attrition Classification Dataset
 
 **Group 6 — 3CSD, Machine Learning Final Project**
 
