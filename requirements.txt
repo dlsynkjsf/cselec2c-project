@@ -1,0 +1,15 @@
+# Python 3.11.x recommended (matches the team's working environment)
+# Install:   py -3.11 -m pip install -r requirements.txt
+# Run:       jupyter notebook   (or open the .ipynb in VS Code)
+
+numpy==2.4.4
+pandas==3.0.2
+matplotlib==3.10.9
+seaborn==0.13.2
+scikit-learn==1.8.0
+xgboost==3.2.0
+tensorflow==2.21.0
+shap==0.51.0
+dice-ml==0.12
+joblib==1.5.3
+ipykernel==7.2.0

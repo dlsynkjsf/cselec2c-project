@@ -1,0 +1,35 @@
+# Python virtual environments
+.venv/
+.venv-broken/
+venv/
+env/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local tool/editor state
+.vscode/
+.idea/
+
+# Environment files and local secrets
+.env
+.env.*
+
+# Generated ML artifacts
+models/
+outputs/
+artifacts/
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.keras
+*.onnx
+
+# OS junk
+.DS_Store
+Thumbs.db
