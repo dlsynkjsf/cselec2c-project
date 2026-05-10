@@ -150,16 +150,36 @@ End-to-end execution completes in approximately five to ten minutes on a recent 
 
 ### 4.3 Outputs
 
-Step 11 writes the following to the `artifacts/` directory:
+Step 11 writes the following to the `artifacts/` directory. Both deployable configurations are exported -- the **recommended XGBoost deployment** and the **soft-voting ensemble** that serves as the SHAP/DiCE explanation target -- so downstream consumers can choose between them without re-running the notebook:
 
-- `preprocessor.joblib` -- the fitted `ColumnTransformer`
-- `best_rf.joblib`, `best_xgb.joblib` -- the Stage B base learners
-- `tuned_ensemble.joblib` -- the final soft-voting ensemble
-- `threshold.txt` -- the decision threshold selected on validation
-- `risk_scores.csv` -- per-employee test-set predictions including `P_Left`, the predicted label, and a categorical risk band (Low / Medium / High)
+- `preprocessor.joblib` -- the fitted `ColumnTransformer`, shared across both configurations
+- `best_rf.joblib` -- the tuned cost-aware Random Forest, retained as the sensitivity reference identified in Step 8
+- `best_xgb.joblib` -- the tuned cost-aware XGBoost, the recommended deployment model
+- `tuned_ensemble.joblib` -- the soft-voting ensemble, the SHAP/DiCE explanation target
+- `thresholds.json` -- validation-selected decision thresholds for both deployable configurations (XGBoost and Voting Ensemble)
+- `risk_scores_xgb.csv` -- per-employee test-set predictions from the recommended XGBoost deployment, including `P_Left`, the predicted label, and a categorical risk band (Low / Medium / High)
+- `risk_scores_ensemble.csv` -- the same per-employee export from the soft-voting ensemble, aligned with the SHAP and DiCE explanations
 
 ---
 
 ## 5. Results
 
-The HP-Tuned Voting Ensemble is identified as the recommended deployment configuration, producing the lowest total weighted cost on the held-out test set among the configurations evaluated. Detailed per-model metrics (accuracy, precision, recall, F1, and selected threshold) and the three-stage comparison plot are produced in Step 8 of the notebook. The corresponding business-impact summary at the end of Step 8 reports the resulting confusion matrix in operational terms (correctly retained employees, unnecessary bonuses, unanticipated leavers, correctly flagged leavers) and the associated total weighted cost.
+The three Step 8 analyses (per-metric three-stage comparison, business cost analysis, and calibration analysis) produce a consistent ranking on the held-out test set. The findings are summarised below.
+
+### 5.1 Headline Result -- XGBoost
+
+**XGBoost is the recommended deployment configuration.** Among the cost-aware hyperparameter-tuned models, XGBoost produces the **lowest total weighted cost** at its validation-selected decision threshold, the **highest aggregate metrics** (F1, accuracy), and competitive ROC-AUC and PR-AUC. The cost-aware training (`scale_pos_weight = 2`) and per-model threshold tuning aligned XGBoost's loss function and decision boundary with the project's asymmetric error costs.
+
+### 5.2 Sensitivity Reference -- Random Forest
+
+Random Forest does not match XGBoost on aggregate metrics or total cost, but it produces the **highest recall on the positive (`Left`) class**. In operational terms, Random Forest flags the largest share of true leavers, at the cost of additional false positives. It is therefore retained as a sensitivity reference: when the operational priority is to miss as few flight-risk employees as possible -- even at the expense of additional retention conversations with employees who would have stayed -- Random Forest provides the more aggressive screen.
+
+### 5.3 The Soft-Voting Ensemble Did Not Win
+
+The optimized soft-voting ensemble of Random Forest and XGBoost did not outperform XGBoost on aggregate metrics and did not exceed Random Forest in recall. The interpretation is that XGBoost captured stronger overall predictive structure, while Random Forest remained more sensitive to detecting positive attrition cases. The unweighted soft-vote average therefore smooths both effects and produces a moderate model that wins on neither dimension. This is reported as a legitimate negative finding: when one base learner dominates aggregate metrics and the other dominates recall, simple averaging has no direction in which to improve.
+
+### 5.4 Explainability Configuration
+
+The SHAP and DiCE layers are nevertheless applied to the **soft-voting ensemble** rather than to XGBoost in isolation. Because soft voting averages the base models' predicted probabilities, the linearity of the soft-vote operator implies that the ensemble's SHAP attribution is the exact mean of the Random Forest and XGBoost SHAP values when both are computed in probability space. This gives a single coherent explanation that covers both learners driving the recommended deployment, and it is the same target reused by DiCE for the counterfactual recommendations.
+
+Detailed per-model metrics (accuracy, precision, recall, F1, total cost, ROC-AUC, PR-AUC, and selected threshold) and the supporting plots are produced in Step 8 of the notebook. The corresponding business-impact summary reports the resulting confusion matrix in operational terms (correctly retained employees, unnecessary bonuses, unanticipated leavers, correctly flagged leavers) and the associated total weighted cost.
